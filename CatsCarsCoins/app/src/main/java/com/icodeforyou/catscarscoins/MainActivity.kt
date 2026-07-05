@@ -1,4 +1,13 @@
 // MainActivity.kt
+// CatsCarsCoins — spec 24.0.5. Complete file.
+// Change from 24.0.5-14: currentWindowAdaptiveInfo() → currentWindowAdaptiveInfoV2()
+// (deprecated in adaptive 1.3.0 line; V2 supports L/XL width size classes).
+// Change from previous version: the duplicated splash rendering is gone.
+// NavDisplay is now the single source of truth for ALL destinations; the
+// navigation chrome is hidden on splash via layoutType (data), not by
+// tearing down the spec 0.5 tree (structure). The locked tree
+// AppTheme { NavigationSuiteScaffold { NotifierHost { NavDisplay } } }
+// now holds on every frame of the app's lifetime, splash included.
 package com.icodeforyou.catscarscoins
 
 import android.os.Bundle
@@ -13,7 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -21,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -53,35 +66,31 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * The one and only app shell. NavDisplay owns every destination (single
+ * source of truth); navigation chrome visibility is derived data —
+ * [NavigationSuiteType.None] while Splash is current, the adaptive
+ * bar/rail/drawer default otherwise. No destination is ever rendered
+ * outside NavDisplay, so the spec 0.5 tree never changes shape.
+ */
 @Composable
 private fun AppShell() {
     val backStack = rememberNavBackStack(SplashKey)
+    val currentKey: NavKey? = backStack.lastOrNull()
 
-    // Determine which entry is currently active
-    val currentKey = backStack.lastOrNull()
-
-    // ────────────────────────────────────────────────────────────────
-    // SPLASH MODE: NO NAV RAIL, NO SCAFFOLD, JUST FULLSCREEN SPLASH
-    // ────────────────────────────────────────────────────────────────
-    if (currentKey == SplashKey) {
-        NotifierHost {
-            SplashScreenEntry(
-                onFinished = {
-                    backStack.clear()
-                    backStack.add(MainKey)
-                },
-            )
-        }
-        return
+    val layoutType = if (currentKey == SplashKey) {
+        NavigationSuiteType.None
+    } else {
+        NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(
+            currentWindowAdaptiveInfoV2(),
+        )
     }
 
-    // ────────────────────────────────────────────────────────────────
-    // MAIN MODE: NAV RAIL + CONTENT
-    // ────────────────────────────────────────────────────────────────
     NavigationSuiteScaffold(
+        layoutType = layoutType,
         navigationSuiteItems = {
             item(
-                selected = true,
+                selected = currentKey == MainKey,
                 onClick = { /* single destination at standup */ },
                 icon = { Icon(Icons.Default.Home, contentDescription = "Main") },
                 label = { Text("Main") },
@@ -117,7 +126,6 @@ private fun SplashScreenEntry(onFinished: () -> Unit) {
         onFinished()
     }
 
-    // FULLSCREEN BLACK SPLASH WITH CENTERED LOGO
     Box(
         modifier = Modifier
             .fillMaxSize()
