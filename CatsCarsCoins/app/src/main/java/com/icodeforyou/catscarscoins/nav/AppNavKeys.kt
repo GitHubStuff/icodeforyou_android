@@ -1,4 +1,6 @@
 // nav/AppNavKeys.kt
+// CatsCarsCoins — spec 24.1.24. Complete file.
+// Change from previous version: SettingsKey added (Phase 1 destination).
 package com.icodeforyou.catscarscoins.nav
 
 import androidx.navigation3.runtime.NavKey
@@ -18,3 +20,6 @@ data object SplashKey : AppNavKey
 
 @Serializable
 data object MainKey : AppNavKey
+
+@Serializable
+data object SettingsKey : AppNavKey
