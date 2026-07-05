@@ -1,0 +1,55 @@
+# ---------- macOS ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ---------- Gradle ----------
+.gradle/
+build/
+gradle-app.setting
+.gradletasknamecache
+
+# ---------- Android build artifacts ----------
+*.apk
+*.aab
+*.ap_
+*.dex
+bin/
+gen/
+out/
+release/
+captures/
+
+# ---------- Java / Kotlin compiled ----------
+*.class
+.kotlin/
+
+# ---------- Local configuration (SDK paths, API keys) ----------
+local.properties
+
+# ---------- IntelliJ / Android Studio ----------
+*.iml
+.idea/
+*.hprof
+
+# ---------- Native (NDK / CMake) ----------
+.externalNativeBuild/
+.cxx/
+obj/
+*.so
+
+# ---------- Signing — NEVER commit keystores ----------
+*.jks
+*.keystore
+
+# ---------- Logs, lint, profiling ----------
+*.log
+lint-results*
+*.trace
+
+# ---------- Merge / patch leftovers ----------
+*.orig
+*.rej
+
+# ---------- Room exported schemas are TRACKED intentionally ----------
+# (do not add app/schemas/ here — spec requires schema export under VCS)
