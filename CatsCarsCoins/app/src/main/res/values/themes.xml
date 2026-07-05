@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- themes.xml — base app theme shell. Visual theming lives in Compose
+     (AppTheme, spec 0.5); this XML theme only hosts window-level attributes. -->
 <resources>
 
     <style name="Theme.CatsCarsCoins" parent="android:Theme.Material.Light.NoActionBar" />

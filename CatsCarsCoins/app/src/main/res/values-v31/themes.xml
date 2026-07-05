@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- values-v31/themes.xml — platform SplashScreen configuration (spec 0.4).
+     OS splash renders splash_logo on a black background; windowBackground is
+     the black drawable so no white flash appears between splash dismissal and
+     Compose's first frame. -->
+<resources>
+
+    <style name="Theme.CatsCarsCoins" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@color/black</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="android:windowBackground">@drawable/splash_black</item>
+    </style>
+</resources>
