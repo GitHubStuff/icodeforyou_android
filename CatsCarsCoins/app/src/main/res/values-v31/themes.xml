@@ -1,13 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- values-v31/themes.xml — platform SplashScreen configuration (spec 0.4).
-     OS splash renders splash_logo on a black background; windowBackground is
-     the black drawable so no white flash appears between splash dismissal and
-     Compose's first frame. -->
+     OS splash is PLAIN BLACK: the icon slot is explicitly transparent because
+     an UNSET slot falls back to the launcher icon, and any artwork in the
+     slot gets circle-masked. The logo renders full-rectangle in the in-app
+     splash entry instead. windowBackground stays black so no flash appears
+     between splash dismissal and Compose's first frame. -->
 <resources>
 
-    <style name="Theme.CatsCarsCoins" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground">@color/black</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
-        <item name="android:windowBackground">@drawable/splash_black</item>
+    <style name="Theme.CatsCarsCoins.Splash" parent="Theme.SplashScreen">
+
+        <!-- Black background -->
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+
+        <!-- KILL THE PLATFORM ICON COMPLETELY -->
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+
+        <!-- ALSO kill the circle mask (Android applies this even to transparent icons) -->
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+
+        <!-- No animation -->
+        <item name="windowSplashScreenAnimationDuration">0</item>
+
+        <!-- After splash, switch to your real theme -->
+        <item name="postSplashScreenTheme">@style/Theme.CatsCarsCoins</item>
+
     </style>
+
 </resources>

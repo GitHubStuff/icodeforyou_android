@@ -3,5 +3,8 @@
      (AppTheme, spec 0.5); this XML theme only hosts window-level attributes. -->
 <resources>
 
-    <style name="Theme.CatsCarsCoins" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.CatsCarsCoins" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Force a dark/black window background so the screen is not white -->
+        <item name="android:windowBackground">@color/black</item>
+    </style>
 </resources>
