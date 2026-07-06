@@ -9,7 +9,7 @@ import com.icodeforyou.catscarscoins.preferences.domain.AppPreferences
  * size"). Not one of the four persisted keys — a design token. Matches
  * Material3 labelLarge (14 sp), the default button label size.
  */
-const val BUTTON_FONT_SIZE_SP: Float = 14f
+const val BUTTON_FONT_SIZE_SP: Float = 18f
 
 /**
  * Process-wide snapshot of the latest [AppPreferences] (spec §17: the

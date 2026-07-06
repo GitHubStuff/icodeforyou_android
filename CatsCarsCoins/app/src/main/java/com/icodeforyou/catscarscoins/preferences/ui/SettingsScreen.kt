@@ -37,12 +37,16 @@ private val SCREEN_PADDING = 16.dp
 private val SECTION_SPACING = 24.dp
 
 /**
- * Slider detents between the bounds: one stop per whole second,
+ * Forces the slider to snap to 5-second increments.
+ */
+private const val POLLING_STEP_SIZE = 5
+
+/**
+ * Slider detents between the bounds: calculated to step by 5 seconds,
  * excluding the two endpoints (Compose's steps semantics).
  */
 private val POLLING_SLIDER_STEPS =
-    AppPreferences.POLLING_INTERVAL_MAX_SECONDS -
-            AppPreferences.POLLING_INTERVAL_MIN_SECONDS - 1
+    ((AppPreferences.POLLING_INTERVAL_MAX_SECONDS - AppPreferences.POLLING_INTERVAL_MIN_SECONDS) / POLLING_STEP_SIZE) - 1
 
 /**
  * Settings destination (Phase 1 write path). The screen is the flow
