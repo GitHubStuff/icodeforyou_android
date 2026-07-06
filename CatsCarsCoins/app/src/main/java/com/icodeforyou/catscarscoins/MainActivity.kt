@@ -41,6 +41,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -48,13 +50,13 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.BiasAlignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -114,7 +116,9 @@ class MainActivity : ComponentActivity() {
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
 
             AppTheme(themeMode = themeMode) {
-                AppShell()
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    AppShell()
+                }
             }
         }
     }
@@ -171,7 +175,12 @@ private fun AppShell() {
             )
         }
 
-        Box(modifier = safeAreaModifier) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .then(safeAreaModifier)
+        ) {
             NotifierHost(enabled = !isSplash) {
                 NavDisplay(
                     backStack = backStack,
@@ -228,8 +237,6 @@ private fun SplashScreenEntry(onFinished: () -> Unit) {
 private fun MainScreenEntry() {
     Box(
         modifier = Modifier.fillMaxSize(),
-        // horizontalBias = 0f (centered horizontally)
-        // verticalBias = -0.5f (halfway between the top edge and the vertical center)
         contentAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.5f),
     ) {
         Image(
