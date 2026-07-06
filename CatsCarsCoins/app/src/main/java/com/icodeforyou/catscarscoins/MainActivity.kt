@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.BiasAlignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -227,8 +228,13 @@ private fun SplashScreenEntry(onFinished: () -> Unit) {
 private fun MainScreenEntry() {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+        // horizontalBias = 0f (centered horizontally)
+        // verticalBias = -0.5f (halfway between the top edge and the vertical center)
+        contentAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.5f),
     ) {
-        Text(text = "Main")
+        Image(
+            painter = painterResource(id = R.drawable.hplogo),
+            contentDescription = "Main Logo"
+        )
     }
 }
