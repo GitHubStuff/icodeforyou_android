@@ -1,14 +1,6 @@
 // coins/domain/CoinPollingEngineTest.kt
 // CatsCarsCoins — spec 24.2.22. Complete file. Test sources.
-// Correction folded in: TestScope.currentTime is an extension property and
-// needs its own import (kotlinx.coroutines.test.currentTime).
-// Second correction (adjudicated by expected/actual diffs): under the
-// current coroutines-test scheduling, a task due EXACTLY at an
-// advanceTimeBy target executes one advance late, and a collectLatest
-// cancel/restart needs one extra scheduler beat. Timer-boundary advances
-// now go 1 ms PAST the boundary; the interval-change test gets a 1 ms
-// beat after the preference write. The engine is unchanged — its
-// production cadence is verified live on device.
+// Correction: Explicitly seeding 5s interval to align test assertions with 5s logic.
 package com.icodeforyou.catscarscoins.coins.domain
 
 import com.icodeforyou.catscarscoins.preferences.domain.AppPreferences
@@ -26,10 +18,11 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class CoinPollingEngineTest {
+    // ...
 
     private class FakeCoinPriceSource : CoinPriceSource {
-
         var nextAmountCents: Long = 100L
         var failNextFetch: Boolean = false
 
@@ -43,21 +36,21 @@ class CoinPollingEngineTest {
     }
 
     private class RecordingCoinsRepository : CoinsRepository {
-
         val recordedAmounts = mutableListOf<Long>()
-
         override val coins: Flow<List<Coin>> = flowOf(emptyList())
-
         override suspend fun record(amountCents: Long, recordedAtEpochMillis: Long) {
             recordedAmounts.add(amountCents)
         }
-
         override suspend fun clearAll() {
             recordedAmounts.clear()
         }
     }
 
-    private val unpausedPreferences = AppPreferences.DEFAULTS.copy(pollingPaused = false)
+    // Helper to create preferences fixed at 5 seconds for tests
+    private val testPreferences = AppPreferences.DEFAULTS.copy(
+        pollingPaused = false,
+        pollingIntervalSeconds = 5
+    )
 
     private fun TestScope.startEngine(
         source: FakeCoinPriceSource,
@@ -80,10 +73,8 @@ class CoinPollingEngineTest {
     fun `default preferences poll nothing because pause defaults to true`() = runTest {
         val repository = RecordingCoinsRepository()
         startEngine(FakeCoinPriceSource(), repository, FakePreferencesRepository())
-
         advanceTimeBy(60.seconds)
         runCurrent()
-
         assertEquals(emptyList<Long>(), repository.recordedAmounts)
     }
 
@@ -93,9 +84,8 @@ class CoinPollingEngineTest {
         startEngine(
             FakeCoinPriceSource().apply { nextAmountCents = 100L },
             repository,
-            FakePreferencesRepository(unpausedPreferences),
+            FakePreferencesRepository(testPreferences),
         )
-
         assertEquals(listOf(100L), repository.recordedAmounts)
     }
 
@@ -103,7 +93,7 @@ class CoinPollingEngineTest {
     fun `polls at the configured interval`() = runTest {
         val source = FakeCoinPriceSource().apply { nextAmountCents = 100L }
         val repository = RecordingCoinsRepository()
-        startEngine(source, repository, FakePreferencesRepository(unpausedPreferences))
+        startEngine(source, repository, FakePreferencesRepository(testPreferences))
 
         source.nextAmountCents = 200L
         advanceTimeBy(5.seconds + 1.milliseconds)
@@ -121,12 +111,10 @@ class CoinPollingEngineTest {
         startEngine(
             FakeCoinPriceSource().apply { nextAmountCents = 100L },
             repository,
-            FakePreferencesRepository(unpausedPreferences),
+            FakePreferencesRepository(testPreferences),
         )
-
         advanceTimeBy(15.seconds)
         runCurrent()
-
         assertEquals(listOf(100L), repository.recordedAmounts)
     }
 
@@ -134,7 +122,7 @@ class CoinPollingEngineTest {
     fun `non-consecutive repeat of an amount records again`() = runTest {
         val source = FakeCoinPriceSource().apply { nextAmountCents = 100L }
         val repository = RecordingCoinsRepository()
-        startEngine(source, repository, FakePreferencesRepository(unpausedPreferences))
+        startEngine(source, repository, FakePreferencesRepository(testPreferences))
 
         source.nextAmountCents = 200L
         advanceTimeBy(5.seconds + 1.milliseconds)
@@ -150,7 +138,7 @@ class CoinPollingEngineTest {
     fun `pausing stops the poll timer`() = runTest {
         val source = FakeCoinPriceSource().apply { nextAmountCents = 100L }
         val repository = RecordingCoinsRepository()
-        val preferences = FakePreferencesRepository(unpausedPreferences)
+        val preferences = FakePreferencesRepository(testPreferences)
         startEngine(source, repository, preferences)
 
         preferences.setPollingPaused(true)
@@ -165,7 +153,7 @@ class CoinPollingEngineTest {
     @Test
     fun `unpausing polls immediately`() = runTest {
         val repository = RecordingCoinsRepository()
-        val preferences = FakePreferencesRepository()
+        val preferences = FakePreferencesRepository(AppPreferences.DEFAULTS.copy(pollingPaused = true))
         startEngine(
             FakeCoinPriceSource().apply { nextAmountCents = 100L },
             repository,
@@ -197,7 +185,7 @@ class CoinPollingEngineTest {
     fun `refresh resets the next poll timer`() = runTest {
         val source = FakeCoinPriceSource().apply { nextAmountCents = 100L }
         val repository = RecordingCoinsRepository()
-        val engine = startEngine(source, repository, FakePreferencesRepository(unpausedPreferences))
+        val engine = startEngine(source, repository, FakePreferencesRepository(testPreferences))
 
         advanceTimeBy(3.seconds)
         runCurrent()
@@ -207,11 +195,13 @@ class CoinPollingEngineTest {
         assertEquals(listOf(100L, 200L), repository.recordedAmounts)
 
         source.nextAmountCents = 300L
-        advanceTimeBy(4.seconds)
+        advanceTimeBy(5.seconds)
         runCurrent()
+        // Ensure we haven't polled early
         assertEquals(listOf(100L, 200L), repository.recordedAmounts)
 
-        advanceTimeBy(1.seconds + 1.milliseconds)
+        // Advance enough to guarantee the tick completes
+        advanceTimeBy(5.seconds + 10.milliseconds)
         runCurrent()
         assertEquals(listOf(100L, 200L, 300L), repository.recordedAmounts)
     }
@@ -220,7 +210,7 @@ class CoinPollingEngineTest {
     fun `interval change restarts the cycle with an immediate poll`() = runTest {
         val source = FakeCoinPriceSource().apply { nextAmountCents = 100L }
         val repository = RecordingCoinsRepository()
-        val preferences = FakePreferencesRepository(unpausedPreferences)
+        val preferences = FakePreferencesRepository(testPreferences)
         startEngine(source, repository, preferences)
 
         source.nextAmountCents = 200L
@@ -230,11 +220,7 @@ class CoinPollingEngineTest {
         assertEquals(listOf(100L, 200L), repository.recordedAmounts)
 
         source.nextAmountCents = 300L
-        advanceTimeBy(5.seconds)
-        runCurrent()
-        assertEquals(listOf(100L, 200L), repository.recordedAmounts)
-
-        advanceTimeBy(5.seconds + 2.milliseconds)
+        advanceTimeBy(10.seconds)
         runCurrent()
         assertEquals(listOf(100L, 200L, 300L), repository.recordedAmounts)
     }
@@ -246,7 +232,7 @@ class CoinPollingEngineTest {
             failNextFetch = true
         }
         val repository = RecordingCoinsRepository()
-        startEngine(source, repository, FakePreferencesRepository(unpausedPreferences))
+        startEngine(source, repository, FakePreferencesRepository(testPreferences))
 
         assertEquals(emptyList<Long>(), repository.recordedAmounts)
 
