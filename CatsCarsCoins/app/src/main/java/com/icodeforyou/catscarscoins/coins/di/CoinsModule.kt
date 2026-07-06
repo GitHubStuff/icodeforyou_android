@@ -1,7 +1,6 @@
 // coins/di/CoinsModule.kt
-// CatsCarsCoins — spec 24.2.34. Complete file.
-// Change from 24.2.25: CoinRefresher bound to the engine single (same
-// instance, ISP face) and CoinsViewModel registered.
+// CatsCarsCoins — spec 24.2.50. Complete file.
+// Change from 24.2.34: CoinToastPresenter single added (coin toast wiring).
 package com.icodeforyou.catscarscoins.coins.di
 
 import com.icodeforyou.catscarscoins.coins.data.RoomCoinsRepository
@@ -11,6 +10,7 @@ import com.icodeforyou.catscarscoins.coins.domain.CoinPollingEngine
 import com.icodeforyou.catscarscoins.coins.domain.CoinPriceSource
 import com.icodeforyou.catscarscoins.coins.domain.CoinRefresher
 import com.icodeforyou.catscarscoins.coins.domain.CoinsRepository
+import com.icodeforyou.catscarscoins.coins.ui.CoinToastPresenter
 import com.icodeforyou.catscarscoins.coins.ui.CoinsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,4 +72,15 @@ val coinsModule = module {
     }
 
     viewModelOf(::CoinsViewModel)
+
+    single<CoinToastPresenter> {
+        CoinToastPresenter(
+            coinsRepository = get(),
+            notifier = get(),
+            // Dedicated process-lifetime supervisor, same reasoning as the
+            // engine's: one supervisor per subsystem, isolated failure
+            // domains. Dies with the process.
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        )
+    }
 }

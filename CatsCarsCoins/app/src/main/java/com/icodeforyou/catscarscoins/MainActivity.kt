@@ -1,10 +1,17 @@
 // MainActivity.kt
-// CatsCarsCoins — spec 24.2.38. Complete file.
-// Change from 24.1.25: Coins is a live destination — one line in
-// TOP_LEVEL_DESTINATIONS (the data-driven rail's contract, kept) plus
-// entry<CoinsKey> { CoinsScreen() }.
-// Correction folded in: Icons.Default.Paid is material-icons-extended;
-// the project pins icons-core only — ShoppingCart (core set) used instead.
+// CatsCarsCoins — spec 24.3.7. Complete file.
+// Change from 24.2.52: Coins rail icon is Icons.Default.CurrencyBitcoin —
+// material-icons-extended adopted by user decision (24.3.7), superseding
+// the 24.2.38 core-set ShoppingCart workaround.
+// Change from 24.2.38: safe-area insets applied at the shell. The app is
+// edge-to-edge (enableEdgeToEdge) and NavigationSuiteScaffold insets only
+// its own chrome — content needs safeDrawing Top+Horizontal, applied ONCE
+// here so screens stay inset-ignorant. Bottom excluded: the bar/rail owns
+// that edge.
+// Corrections folded in (splash integrity): insets are conditional — the
+// splash stays full-bleed (no padded strip showing window background);
+// NotifierHost is disabled during splash so an early poll's toast waits
+// until the splash ends.
 // Change from previous version: the duplicated splash rendering is gone.
 // NavDisplay is now the single source of truth for ALL destinations; the
 // navigation chrome is hidden on splash via layoutType (data), not by
@@ -20,10 +27,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.CurrencyBitcoin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -76,7 +88,7 @@ private data class TopLevelDestination(
  */
 private val TOP_LEVEL_DESTINATIONS = listOf(
     TopLevelDestination(key = MainKey, label = "Main", icon = Icons.Default.Home),
-    TopLevelDestination(key = CoinsKey, label = "Coins", icon = Icons.Default.ShoppingCart),
+    TopLevelDestination(key = CoinsKey, label = "Coins", icon = Icons.Default.CurrencyBitcoin),
     TopLevelDestination(key = SettingsKey, label = "Settings", icon = Icons.Default.Settings),
 )
 
@@ -141,30 +153,43 @@ private fun AppShell() {
             }
         },
     ) {
-        NotifierHost {
-            NavDisplay(
-                backStack = backStack,
-                onBack = { backStack.removeLastOrNull() },
-                entryProvider = entryProvider {
-                    entry<SplashKey> {
-                        SplashScreenEntry(
-                            onFinished = {
-                                backStack.clear()
-                                backStack.add(MainKey)
-                            },
-                        )
-                    }
-                    entry<MainKey> {
-                        MainScreenEntry()
-                    }
-                    entry<CoinsKey> {
-                        CoinsScreen()
-                    }
-                    entry<SettingsKey> {
-                        SettingsScreen()
-                    }
-                },
+        val isSplash = currentKey == SplashKey
+        val safeAreaModifier = if (isSplash) {
+            Modifier
+        } else {
+            Modifier.windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+                ),
             )
+        }
+
+        Box(modifier = safeAreaModifier) {
+            NotifierHost(enabled = !isSplash) {
+                NavDisplay(
+                    backStack = backStack,
+                    onBack = { backStack.removeLastOrNull() },
+                    entryProvider = entryProvider {
+                        entry<SplashKey> {
+                            SplashScreenEntry(
+                                onFinished = {
+                                    backStack.clear()
+                                    backStack.add(MainKey)
+                                },
+                            )
+                        }
+                        entry<MainKey> {
+                            MainScreenEntry()
+                        }
+                        entry<CoinsKey> {
+                            CoinsScreen()
+                        }
+                        entry<SettingsKey> {
+                            SettingsScreen()
+                        }
+                    },
+                )
+            }
         }
     }
 }

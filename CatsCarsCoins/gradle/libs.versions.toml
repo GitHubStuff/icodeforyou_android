@@ -148,6 +148,10 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 
 # ── ADDED: material icons — Icons.Default.* vectors for navigation chrome ───
 androidx-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core", version.ref = "materialIconsCore" }
+# Extended set — ADDED 24.3.7 for Icons.Filled.CurrencyBitcoin (Coins rail
+# icon, user decision superseding 24.2.38's core-set ShoppingCart). Large
+# artifact; R8 strips unused icons from release builds — debug pays the size.
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsCore" }
 
 # ── ADDED: test toolchain (spec §24.6) ──────────────────────────────────────
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

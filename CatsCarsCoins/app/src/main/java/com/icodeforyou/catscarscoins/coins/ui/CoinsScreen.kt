@@ -1,5 +1,9 @@
 // coins/ui/CoinsScreen.kt
-// CatsCarsCoins — spec 24.2.36. Complete file.
+// CatsCarsCoins — spec 24.2.45. Complete file.
+// Change from 24.2.36: private toUsdDisplay and CENTS_PER_DOLLAR deleted —
+// promoted to coins/ui/UsdDisplay.kt (24.2.44, rule of two: the coin toast
+// is the second user). Same package: call sites unchanged, no import.
+// APPLY WITH 24.2.44 — the two files land together.
 package com.icodeforyou.catscarscoins.coins.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -31,8 +35,6 @@ import org.koin.androidx.compose.koinViewModel
 
 private val SCREEN_PADDING = 16.dp
 private val ROW_VERTICAL_PADDING = 8.dp
-
-private const val CENTS_PER_DOLLAR = 100L
 
 /** Thread-safe; system zone applied at format time. */
 private val TIMESTAMP_FORMATTER: DateTimeFormatter =
@@ -134,16 +136,6 @@ private fun CoinRow(coin: Coin) {
             style = MaterialTheme.typography.bodyMedium,
         )
     }
-}
-
-/**
- * Exact integer rendering — the no-Double rule extends to display:
- * 6_712_345 cents → "$67,123.45".
- */
-private fun Long.toUsdDisplay(): String {
-    val dollars = this / CENTS_PER_DOLLAR
-    val cents = this % CENTS_PER_DOLLAR
-    return "$%,d.%02d".format(Locale.US, dollars, cents)
 }
 
 private fun Long.toTimestampDisplay(): String =

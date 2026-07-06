@@ -1,10 +1,12 @@
 // MyApp.kt
-// CatsCarsCoins — spec 24.2.26. Complete file.
-// Change from 24.1.16: CoinPollingEngine started at bootstrap (Phase 2).
+// CatsCarsCoins — spec 24.2.51. Complete file.
+// Change from 24.2.26: CoinToastPresenter started at bootstrap — the
+// fourth and final Phase 2 bootstrap duty.
 package com.icodeforyou.catscarscoins
 
 import android.app.Application
 import com.icodeforyou.catscarscoins.coins.domain.CoinPollingEngine
+import com.icodeforyou.catscarscoins.coins.ui.CoinToastPresenter
 import com.icodeforyou.catscarscoins.di.appModules
 import com.icodeforyou.catscarscoins.preferences.PreferencesSnapshot
 import com.icodeforyou.catscarscoins.preferences.domain.PreferencesRepository
@@ -21,7 +23,8 @@ import org.koin.core.context.startKoin
  * Application entry point (spec 0.5). Bootstrap responsibilities only:
  * start Koin, start the preferences snapshot feed (spec §17 accessors),
  * start the coin polling engine (spec §19 — app-lifetime polling; the
- * pause preference, not screen visibility, gates it).
+ * pause preference, not screen visibility, gates it), and start the coin
+ * toast presenter (spec Notifier — toasts must fire on any destination).
  */
 class MyApp : Application() {
 
@@ -41,6 +44,7 @@ class MyApp : Application() {
         }
         startPreferencesSnapshotFeed()
         startCoinPolling()
+        startCoinToasts()
     }
 
     /**
@@ -66,5 +70,15 @@ class MyApp : Application() {
      */
     private fun startCoinPolling() {
         get<CoinPollingEngine>().start()
+    }
+
+    /**
+     * Coin toasts are app-lifetime like the polling that feeds them: a
+     * new sample toasts no matter which destination is showing — the
+     * NotifierHost sits above NavDisplay in the locked 0.5 tree for
+     * exactly this reason.
+     */
+    private fun startCoinToasts() {
+        get<CoinToastPresenter>().start()
     }
 }

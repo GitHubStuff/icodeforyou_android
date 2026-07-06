@@ -65,6 +65,12 @@ android {
         // ── ADDED: required for the buildConfigField above (spec 0.3)
         buildConfig = true
     }
+    sourceSets {
+        // ── ADDED 24.3.6: MigrationTestHelper reads the exported schema
+        //    JSONs from instrumented-test assets (per its own KDoc); this
+        //    ships schemas/ inside the androidTest APK.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 // ── ADDED: Kotlin toolchain pin — guarantees JVM-17 bytecode regardless of
@@ -103,6 +109,9 @@ dependencies {
     implementation(libs.androidx.material3.adaptive.navigation.suite)
     // ── ADDED: Icons.Default.* vectors for the navigation chrome
     implementation(libs.androidx.material.icons.core)
+    // ── ADDED 24.3.7: Bitcoin currency symbol for the Coins rail icon
+    //    (extended icon set; declared 24.3.7 in the catalog)
+    implementation(libs.androidx.material.icons.extended)
 
     // ── ADDED: DI — Koin runtime DSL, versions via BOM (spec §5)
     implementation(platform(libs.koin.bom))

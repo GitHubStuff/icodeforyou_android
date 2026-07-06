@@ -2,8 +2,11 @@
 // CatsCarsCoins — spec 24.2.41. Complete file.
 // Change from the 0.5 placeholder: the host has its real body — overlay
 // surface, whole-surface + [X] dismissal, and the LaunchedEffect clock
-// keyed on Notification.id. Call-site signature unchanged (notifier is a
-// koinInject default), so MainActivity is untouched.
+// keyed on Notification.id.
+// Correction folded in (24.2.52 splash integrity): enabled param — while
+// false (splash), the overlay neither renders nor runs its clock; a
+// notification arriving during splash shows after it, full duration.
+// Also folded: delay(Long) is the legacy overload — Duration form used.
 package com.icodeforyou.catscarscoins.notifier
 
 import androidx.compose.foundation.clickable
@@ -25,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -35,7 +39,7 @@ private val TOAST_ELEVATION = 6.dp
 /**
  * The in-app notification overlay (spec: arbitrary composable payloads,
  * auto-dismiss after the notification's duration, tap-dismissible via the
- * whole surface or the [X]). Sits exactly where spec 0.5 parked it —
+ * whole surface or the X. Sits exactly where spec 0.5 parked it —
  * AppTheme { NavigationSuiteScaffold { NotifierHost { NavDisplay } } } —
  * so toasts overlay the content area on every destination, above nothing
  * and hiding nothing but what they cover.
@@ -46,6 +50,7 @@ private val TOAST_ELEVATION = 6.dp
  */
 @Composable
 fun NotifierHost(
+    enabled: Boolean = true,
     notifier: Notifier = koinInject(),
     content: @Composable () -> Unit,
 ) {
@@ -54,15 +59,17 @@ fun NotifierHost(
     Box(modifier = Modifier.fillMaxSize()) {
         content()
 
-        notification?.let { current ->
-            LaunchedEffect(current.id) {
-                delay(current.durationMillis)
-                notifier.dismiss()
+        if (enabled) {
+            notification?.let { current ->
+                LaunchedEffect(current.id) {
+                    delay(current.durationMillis.milliseconds)
+                    notifier.dismiss()
+                }
+                NotificationSurface(
+                    notification = current,
+                    onDismiss = notifier::dismiss,
+                )
             }
-            NotificationSurface(
-                notification = current,
-                onDismiss = notifier::dismiss,
-            )
         }
     }
 }

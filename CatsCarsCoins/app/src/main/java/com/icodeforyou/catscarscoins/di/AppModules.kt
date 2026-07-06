@@ -1,8 +1,9 @@
 // di/AppModules.kt
-// CatsCarsCoins — spec 24.2.43. Complete file.
-// Change from 24.2.20: notifierModule wired in (Phase 2 Notifier).
+// CatsCarsCoins — spec 24.3.17. Complete file.
+// Change from 24.2.43: catsModule wired in (Phase 3).
 package com.icodeforyou.catscarscoins.di
 
+import com.icodeforyou.catscarscoins.cats.di.catsModule
 import com.icodeforyou.catscarscoins.coins.di.coinsModule
 import com.icodeforyou.catscarscoins.db.databaseModule
 import com.icodeforyou.catscarscoins.net.networkModule
@@ -20,5 +21,6 @@ val appModules: List<Module> = listOf(
     databaseModule,
     networkModule,
     coinsModule,
+    catsModule,
     notifierModule,
 )
