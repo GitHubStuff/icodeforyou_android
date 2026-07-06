@@ -89,6 +89,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    // ── 24.2.10 correction: pin coroutines core in the app APK to the same
+    //    version as coroutines-test in the test APK (NoSuchMethodError fix)
+    implementation(libs.kotlinx.coroutines.android)
     // ── ADDED 24.1.12: collectAsStateWithLifecycle (declared 24.1.11)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
@@ -145,6 +148,9 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     // ── ADDED: Room DAO/FTS instrumented tests (spec §24.6)
     androidTestImplementation(libs.room3.testing)
+    // ── ADDED 24.2.10: flow assertions + runTest on the instrumented classpath
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.turbine)
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

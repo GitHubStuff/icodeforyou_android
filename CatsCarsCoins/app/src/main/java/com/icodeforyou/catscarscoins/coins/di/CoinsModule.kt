@@ -1,0 +1,75 @@
+// coins/di/CoinsModule.kt
+// CatsCarsCoins — spec 24.2.34. Complete file.
+// Change from 24.2.25: CoinRefresher bound to the engine single (same
+// instance, ISP face) and CoinsViewModel registered.
+package com.icodeforyou.catscarscoins.coins.di
+
+import com.icodeforyou.catscarscoins.coins.data.RoomCoinsRepository
+import com.icodeforyou.catscarscoins.coins.data.remote.CoinbaseApi
+import com.icodeforyou.catscarscoins.coins.data.remote.CoinbaseCoinPriceSource
+import com.icodeforyou.catscarscoins.coins.domain.CoinPollingEngine
+import com.icodeforyou.catscarscoins.coins.domain.CoinPriceSource
+import com.icodeforyou.catscarscoins.coins.domain.CoinRefresher
+import com.icodeforyou.catscarscoins.coins.domain.CoinsRepository
+import com.icodeforyou.catscarscoins.coins.ui.CoinsViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.module
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
+
+/** Converter media type — appears exactly once. */
+private const val JSON_MEDIA_TYPE = "application/json"
+
+/**
+ * Coins feature wiring (spec: Koin runtime DSL). Consumers inject domain
+ * contracts; Room, Retrofit, and wire types stay behind this file (DIP).
+ * CoinDao resolves from databaseModule; OkHttpClient and Json from
+ * networkModule.
+ */
+val coinsModule = module {
+
+    single<CoinsRepository> {
+        RoomCoinsRepository(coinDao = get())
+    }
+
+    single<CoinbaseApi> {
+        Retrofit.Builder()
+            .baseUrl(CoinbaseApi.BASE_URL)
+            .client(get<OkHttpClient>())
+            .addConverterFactory(
+                get<Json>().asConverterFactory(JSON_MEDIA_TYPE.toMediaType()),
+            )
+            .build()
+            .create(CoinbaseApi::class.java)
+    }
+
+    single<CoinPriceSource> {
+        CoinbaseCoinPriceSource(coinbaseApi = get())
+    }
+
+    single<CoinPollingEngine> {
+        CoinPollingEngine(
+            priceSource = get(),
+            coinsRepository = get(),
+            preferencesRepository = get(),
+            // Dedicated process-lifetime supervisor — intentionally not
+            // shared with MyApp's snapshot-feed scope: one supervisor per
+            // subsystem isolates failure domains. Dies with the process.
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+            recordedAtProvider = System::currentTimeMillis,
+        )
+    }
+
+    // ISP face of the engine single: same instance, refresh() only.
+    single<CoinRefresher> {
+        get<CoinPollingEngine>()
+    }
+
+    viewModelOf(::CoinsViewModel)
+}

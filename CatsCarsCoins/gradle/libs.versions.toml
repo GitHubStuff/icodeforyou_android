@@ -71,7 +71,12 @@ splashscreen = "1.2.0"
 materialIconsCore = "1.7.8"
 
 # ── ADDED: test toolchain (spec §24.6 test matrix) ──────────────────────────
-coroutinesTest = "1.11.0"   # virtual-time `runTest`, StandardTestDispatcher
+# ── 24.2.10 correction: one ref for coroutines CORE and TEST. The app must
+# ship kotlinx-coroutines-android at the same version as coroutines-test in
+# the test APK: test 1.11.0 calls core's runBlockingK (new in 1.11.0), and a
+# transitively-resolved older core in the app APK throws NoSuchMethodError
+# on device. Lockstep by construction.
+coroutines = "1.11.0"
 turbine = "1.2.1"           # deterministic Flow assertions
 mockk = "1.14.11"           # mocks — used sparingly; fakes preferred
 
@@ -145,7 +150,8 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 androidx-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core", version.ref = "materialIconsCore" }
 
 # ── ADDED: test toolchain (spec §24.6) ──────────────────────────────────────
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
