@@ -6,24 +6,23 @@
      splash entry instead. windowBackground stays black so no flash appears
      between splash dismissal and Compose's first frame. -->
 <resources>
-
     <style name="Theme.CatsCarsCoins.Splash" parent="Theme.SplashScreen">
-
-        <!-- Black background -->
+        <!-- 1. The visual background -->
         <item name="windowSplashScreenBackground">@android:color/black</item>
-
-        <!-- KILL THE PLATFORM ICON COMPLETELY -->
         <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
-
-        <!-- ALSO kill the circle mask (Android applies this even to transparent icons) -->
         <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
-
-        <!-- No animation -->
         <item name="windowSplashScreenAnimationDuration">0</item>
 
-        <!-- After splash, switch to your real theme -->
+        <!-- 2. Force full-screen window -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+
+        <!-- 3. CRITICAL: These must be BLACK to hide the notch icons/status bar -->
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+
+        <!-- 4. Hand-off -->
         <item name="postSplashScreenTheme">@style/Theme.CatsCarsCoins</item>
-
     </style>
-
 </resources>

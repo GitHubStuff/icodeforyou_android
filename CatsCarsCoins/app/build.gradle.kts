@@ -96,6 +96,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    // This provides the Android XML Material3 Themes
+    implementation("com.google.android.material:material:1.12.0")
+
     // ── 24.2.10 correction: pin coroutines core in the app APK to the same
     //    version as coroutines-test in the test APK (NoSuchMethodError fix)
     implementation(libs.kotlinx.coroutines.android)

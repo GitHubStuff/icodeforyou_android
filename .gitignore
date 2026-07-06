@@ -24,7 +24,7 @@ captures/
 *.class
 .kotlin/
 
-# ---------- Local configuration (SDK paths, API keys) ----------
+# ---------- x configuration (SDK paths, API keys) ----------
 local.properties
 
 # ---------- IntelliJ / Android Studio ----------
