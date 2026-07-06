@@ -1,25 +1,5 @@
 // MainActivity.kt
 // CatsCarsCoins — spec 24.3.23. Complete file.
-// Change from 24.3.7: Cats is a live destination — one line in
-// TOP_LEVEL_DESTINATIONS (Pets icon, extended set) plus
-// entry<CatsKey> { CatsScreen() }. Rail order: Main, Cats, Coins,
-// Settings. Icon imports re-sorted alphabetically (24.3.7's in-place
-// swap had left them unordered).
-// Change from 24.2.38: safe-area insets applied at the shell. The app is
-// edge-to-edge (enableEdgeToEdge) and NavigationSuiteScaffold insets only
-// its own chrome — content needs safeDrawing Top+Horizontal, applied ONCE
-// here so screens stay inset-ignorant. Bottom excluded: the bar/rail owns
-// that edge.
-// Corrections folded in (splash integrity): insets are conditional — the
-// splash stays full-bleed (no padded strip showing window background);
-// NotifierHost is disabled during splash so an early poll's toast waits
-// until the splash ends.
-// Change from previous version: the duplicated splash rendering is gone.
-// NavDisplay is now the single source of truth for ALL destinations; the
-// navigation chrome is hidden on splash via layoutType (data), not by
-// tearing down the spec 0.5 tree (structure). The locked tree
-// AppTheme { NavigationSuiteScaffold { NotifierHost { NavDisplay } } }
-// now holds on every frame of the app's lifetime, splash included.
 package com.icodeforyou.catscarscoins
 
 import android.os.Bundle
@@ -178,6 +158,7 @@ private fun AppShell() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                // The background MUST be painted before the windowInsetsPadding
                 .background(MaterialTheme.colorScheme.background)
                 .then(safeAreaModifier)
         ) {
@@ -237,7 +218,7 @@ private fun SplashScreenEntry(onFinished: () -> Unit) {
 private fun MainScreenEntry() {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.5f),
+        contentAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.25f),
     ) {
         Image(
             painter = painterResource(id = R.drawable.hplogo),
