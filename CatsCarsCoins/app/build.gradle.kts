@@ -27,8 +27,7 @@ val localProperties = Properties().apply {
         file.inputStream().use { load(it) }
     }
 }
-val catApiKey: String = localProperties.getProperty("CAT_API_KEY",
-    "live_hmwrPYV9WIOsk0C2KFcWkSndxNYSZnqqy7xX4TStbVDqSccf3yDPp8nSs92kbhAE")
+val catApiKey: String = localProperties.getProperty("CAT_API_KEY","")
 
 android {
     namespace = "com.icodeforyou.catscarscoins"
