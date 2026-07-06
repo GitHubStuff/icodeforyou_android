@@ -1,5 +1,8 @@
 // preferences/domain/AppPreferences.kt
 // CatsCarsCoins — spec 24.1.1. Complete file.
+// User evolution adopted: POLLING_INTERVAL_DEFAULT = 10 (first-run/reset
+// interval decoupled from the 5 s minimum). Engine tests seed their own
+// interval (24.2.22 correction 4) and do not depend on this value.
 package com.icodeforyou.catscarscoins.preferences.domain
 
 /**
@@ -39,7 +42,7 @@ data class AppPreferences(
         /**
          * Spec reset/default state (spec §16 Reset App order step 2):
          * theme=dark, haptics=on, polling=10, pause=true. First run uses
-         * polling_interval_default = 10 secconds
+         * polling_interval_default = 10 seconds.
          */
         val DEFAULTS: AppPreferences = AppPreferences(
             themeMode = ThemeMode.DARK,
