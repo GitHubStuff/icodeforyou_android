@@ -1,13 +1,12 @@
 // MainActivity.kt
-// CatsCarsCoins — spec 24.3.34. Complete file.
-// Change from 24.3.25: cat detail wired — CatsScreen row tap pushes
-// CatDetailKey(id); entry<CatDetailKey> renders CatDetailScreen. Detail
-// is pushed on top of Cats, so system back pops to the list.
+// CatsCarsCoins — spec 24.4.18. Complete file.
+// Change from 24.3.34: Cars rail entry wired — TOP_LEVEL_DESTINATIONS
+// gains Cars (DirectionsCar icon) after Cats, and entryProvider gains
+// entry<CarsKey> { CarsScreen() }. Rail order is now the spec order:
+// Main / Cats / Cars / Coins / Settings. No shell behavior changes.
 // Base: user's splash/system-bar orchestration (themed system bars via
 // enableEdgeToEdge per state, background painted behind the transparent
-// notch, splash logo entries). Change this step: LocalContext-cast
-// replaced with LocalActivity (activity-compose) — the composition local
-// that exists to provide the Activity; nullability handled explicitly.
+// notch, splash logo entries), LocalActivity-provided Activity.
 package com.icodeforyou.catscarscoins
 
 import android.os.Bundle
@@ -28,6 +27,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CurrencyBitcoin
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Settings
@@ -55,11 +55,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.icodeforyou.catscarscoins.cars.ui.CarsScreen
 import com.icodeforyou.catscarscoins.cats.nav.CatDetailKey
 import com.icodeforyou.catscarscoins.cats.ui.CatDetailScreen
 import com.icodeforyou.catscarscoins.cats.ui.CatsScreen
 import com.icodeforyou.catscarscoins.coins.ui.CoinsScreen
 import com.icodeforyou.catscarscoins.nav.AppNavKey
+import com.icodeforyou.catscarscoins.nav.CarsKey
 import com.icodeforyou.catscarscoins.nav.CatsKey
 import com.icodeforyou.catscarscoins.nav.CoinsKey
 import com.icodeforyou.catscarscoins.nav.MainKey
@@ -92,6 +94,7 @@ private data class TopLevelDestination(
 private val TOP_LEVEL_DESTINATIONS = listOf(
     TopLevelDestination(key = MainKey, label = "Main", icon = Icons.Default.Home),
     TopLevelDestination(key = CatsKey, label = "Cats", icon = Icons.Default.Pets),
+    TopLevelDestination(key = CarsKey, label = "Cars", icon = Icons.Default.DirectionsCar),
     TopLevelDestination(key = CoinsKey, label = "Coins", icon = Icons.Default.CurrencyBitcoin),
     TopLevelDestination(key = SettingsKey, label = "Settings", icon = Icons.Default.Settings),
 )
@@ -234,6 +237,9 @@ private fun AppShell(isDarkTheme: Boolean) {
                         }
                         entry<CatDetailKey> { key ->
                             CatDetailScreen(catId = key.catId)
+                        }
+                        entry<CarsKey> {
+                            CarsScreen()
                         }
                         entry<CoinsKey> {
                             CoinsScreen()

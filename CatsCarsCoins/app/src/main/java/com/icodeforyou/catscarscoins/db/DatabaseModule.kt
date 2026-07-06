@@ -1,10 +1,11 @@
 // db/DatabaseModule.kt
-// CatsCarsCoins — spec 24.3.15. Complete file.
-// Change from 24.2.8: CatDao single added (Phase 3).
+// CatsCarsCoins — spec 24.4.14. Complete file.
+// Change from 24.3.15: CarDao single added (Phase 4).
 package com.icodeforyou.catscarscoins.db
 
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.icodeforyou.catscarscoins.cars.data.CarDao
 import com.icodeforyou.catscarscoins.cats.data.CatDao
 import com.icodeforyou.catscarscoins.coins.data.CoinDao
 import org.koin.android.ext.koin.androidContext
@@ -40,5 +41,9 @@ val databaseModule = module {
 
     single<CatDao> {
         get<CatsCarsDatabase>().catDao()
+    }
+
+    single<CarDao> {
+        get<CatsCarsDatabase>().carDao()
     }
 }

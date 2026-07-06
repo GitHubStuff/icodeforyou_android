@@ -1,7 +1,7 @@
 // nav/AppNavKeys.kt
-// CatsCarsCoins — spec 24.3.22. Complete file.
-// Change from 24.2.37: CatsKey added (Phase 3 destination). Key order
-// mirrors the rail: Main, Cats, Coins, Settings (Cars joins in Phase 4).
+// CatsCarsCoins — spec 24.4.18. Complete file.
+// Change from 24.3.22: CarsKey added (Phase 4 destination). Key order
+// mirrors the rail: Main, Cats, Cars, Coins, Settings.
 package com.icodeforyou.catscarscoins.nav
 
 import androidx.navigation3.runtime.NavKey
@@ -24,6 +24,9 @@ data object MainKey : AppNavKey
 
 @Serializable
 data object CatsKey : AppNavKey
+
+@Serializable
+data object CarsKey : AppNavKey
 
 @Serializable
 data object CoinsKey : AppNavKey
