@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
@@ -45,13 +47,15 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -60,6 +64,11 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import coil3.compose.rememberAsyncImagePainter
+import coil3.gif.AnimatedImageDecoder
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.icodeforyou.catscarscoins.R.drawable.coin
 import com.icodeforyou.catscarscoins.cars.ui.CarsScreen
 import com.icodeforyou.catscarscoins.cats.nav.CatDetailKey
 import com.icodeforyou.catscarscoins.cats.ui.CatDetailScreen
@@ -86,7 +95,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 /** How long the in-app splash entry holds before advancing to Main. */
-private val SPLASH_HOLD: Duration = 4000.milliseconds
+private val SPLASH_HOLD: Duration = 1500.milliseconds
 
 /** A rail/bar destination: key + chrome presentation. */
 private data class TopLevelDestination(
@@ -233,7 +242,7 @@ private fun AppShell(isDarkTheme: Boolean) {
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },
                     // Specifying entryDecorators replaces the defaults, so
-                    // the saveable-state default is restated, then the
+                    // the save-able state default is restated, then the
                     // ViewModel store decorator is added: each back-stack
                     // entry owns its own ViewModel store. Without it every
                     // entry shares the Activity store, so the parameterized
@@ -315,13 +324,47 @@ private fun SplashScreenEntry(onFinished: () -> Unit) {
 
 @Composable
 private fun MainScreenEntry() {
+    // This outer Box keeps the entire unit dead-center on the screen
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.5f),
+        contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.hplogo),
-            contentDescription = "Main Logo",
+        val context = LocalContext.current
+
+        val gifPainter = rememberAsyncImagePainter(
+            model = ImageRequest.Builder(context)
+                .data(coin)
+                .decoderFactory(AnimatedImageDecoder.Factory())
+                .crossfade(true)
+                .build()
         )
+
+        // Inner Box: This wraps tightly around the GIF's bounds
+        // contentAlignment = Alignment.TopCenter forces everything inside to align to the top of the GIF
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 0.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            // 1. The GIF (Defines the size of this inner Box)
+            Image(
+                painter = gifPainter,
+                contentDescription = "Animated Coin",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth() // Fills the inner Box width
+            )
+
+            // 2. The Logo (Now anchored perfectly to the top edge of the GIF)
+            Image(
+                painter = painterResource(id = R.drawable.screen_logo),
+                contentDescription = "Main Logo",
+                modifier = Modifier
+                    .fillMaxWidth()
+                // Optional: If you want the logo slightly lower than the absolute pixel-perfect top edge,
+                // you can add a top padding here (e.g., .padding(top = 12.dp))
+            )
+        }
     }
 }
+

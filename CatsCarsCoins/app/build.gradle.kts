@@ -160,6 +160,9 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.coil.network.okhttp)
 
+    // --- ADDED: support for .gif
+    implementation(libs.coil.gif)
+
     // ── ADDED: platform SplashScreen compat for installSplashScreen() (spec §4)
     implementation(libs.androidx.core.splashscreen)
 
