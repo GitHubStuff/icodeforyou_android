@@ -1,12 +1,14 @@
 // preferences/ui/SettingsViewModel.kt
-// CatsCarsCoins — spec 24.2.33. Complete file.
-// Change from 24.1.21: private SUBSCRIPTION_STOP_TIMEOUT_MS deleted in favor
-// of the shared ui.SUBSCRIPTION_STOP_TIMEOUT_MS (promoted 24.2.30 at the
-// third StateFlow ViewModel — the debt 24.1.21 itself flagged).
+// CatsCarsCoins — spec 24.5.14. Complete file.
+// Change from 24.2.33: ResetAppUseCase injected + onNukeDatabase() — the
+// Settings Nuke Database card's action (one tap, no confirmation, by
+// decree). Cross-feature domain->domain import; the use case may move to
+// a neutral package during the queued §16 rewrite.
 package com.icodeforyou.catscarscoins.preferences.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.icodeforyou.catscarscoins.dbviewer.domain.ResetAppUseCase
 import com.icodeforyou.catscarscoins.preferences.domain.AppPreferences
 import com.icodeforyou.catscarscoins.preferences.domain.PreferencesRepository
 import com.icodeforyou.catscarscoins.preferences.domain.ThemeMode
@@ -18,14 +20,15 @@ import kotlinx.coroutines.launch
 
 /**
  * Write path for the four persisted preferences (spec: theme, polling
- * 5–30 s, pause, haptics). Exposes the full [AppPreferences] as state —
- * the Settings screen draws all four controls from one object — and four
- * intent-named actions that delegate to the repository. No logic lives
- * here: clamping belongs to the data layer per the 24.1.2 contract, and
- * the tests (24.1.20) verify it arrives clamped anyway.
+ * 5–30 s, pause, haptics) plus the destructive reset trigger. Exposes the
+ * full [AppPreferences] as state — the Settings screen draws its controls
+ * from one object — and intent-named actions that delegate outward. No
+ * logic lives here: clamping belongs to the data layer per the 24.1.2
+ * contract, and the wipe belongs to [ResetAppUseCase].
  */
 class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository,
+    private val resetAppUseCase: ResetAppUseCase,
 ) : ViewModel() {
 
     val preferences: StateFlow<AppPreferences> = preferencesRepository.preferences
@@ -56,6 +59,13 @@ class SettingsViewModel(
     fun onHapticsEnabledChanged(enabled: Boolean) {
         viewModelScope.launch {
             preferencesRepository.setHapticsEnabled(enabled)
+        }
+    }
+
+    /** Nuke Database: fires the wipe. No confirmation — by decree. */
+    fun onNukeDatabase() {
+        viewModelScope.launch {
+            resetAppUseCase.execute()
         }
     }
 }

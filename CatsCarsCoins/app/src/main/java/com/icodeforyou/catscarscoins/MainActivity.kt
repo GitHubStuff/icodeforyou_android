@@ -1,9 +1,10 @@
 // MainActivity.kt
-// CatsCarsCoins — spec 24.4.18. Complete file.
-// Change from 24.3.34: Cars rail entry wired — TOP_LEVEL_DESTINATIONS
-// gains Cars (DirectionsCar icon) after Cats, and entryProvider gains
-// entry<CarsKey> { CarsScreen() }. Rail order is now the spec order:
-// Main / Cats / Cars / Coins / Settings. No shell behavior changes.
+// CatsCarsCoins — spec 24.5.14. Complete file.
+// Change from 24.4.18: DbViewer wired — SettingsScreen's Database Tools
+// card pushes DbViewerKey (entry<DbViewerKey> renders DbViewerScreen);
+// detail is pushed on top of Settings, so system back pops to Settings.
+// The rail is unchanged (Main / Cats / Cars / Coins / Settings) — the
+// DbViewer is reached through Settings by design. No shell changes.
 // Base: user's splash/system-bar orchestration (themed system bars via
 // enableEdgeToEdge per state, background painted behind the transparent
 // notch, splash logo entries), LocalActivity-provided Activity.
@@ -48,18 +49,24 @@ import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.icodeforyou.catscarscoins.cars.ui.CarsScreen
 import com.icodeforyou.catscarscoins.cats.nav.CatDetailKey
 import com.icodeforyou.catscarscoins.cats.ui.CatDetailScreen
 import com.icodeforyou.catscarscoins.cats.ui.CatsScreen
 import com.icodeforyou.catscarscoins.coins.ui.CoinsScreen
+import com.icodeforyou.catscarscoins.dbviewer.nav.DbViewerKey
+import com.icodeforyou.catscarscoins.dbviewer.ui.DbViewerScreen
 import com.icodeforyou.catscarscoins.nav.AppNavKey
 import com.icodeforyou.catscarscoins.nav.CarsKey
 import com.icodeforyou.catscarscoins.nav.CatsKey
@@ -69,6 +76,7 @@ import com.icodeforyou.catscarscoins.nav.SettingsKey
 import com.icodeforyou.catscarscoins.nav.SplashKey
 import com.icodeforyou.catscarscoins.notifier.NotifierHost
 import com.icodeforyou.catscarscoins.preferences.domain.ThemeMode
+import com.icodeforyou.catscarscoins.preferences.hapticsEnabled
 import com.icodeforyou.catscarscoins.preferences.ui.SettingsScreen
 import com.icodeforyou.catscarscoins.preferences.ui.ThemeViewModel
 import com.icodeforyou.catscarscoins.ui.theme.AppTheme
@@ -145,6 +153,7 @@ private fun AppShell(isDarkTheme: Boolean) {
     val activity = requireNotNull(LocalActivity.current as? ComponentActivity) {
         "AppShell must be hosted in a ComponentActivity"
     }
+    val haptics = LocalHapticFeedback.current
 
     // Dynamically update the edge-to-edge styling.
     // If the Splash screen is active, FORCE dark mode so the white icons sit perfectly on the
@@ -182,7 +191,14 @@ private fun AppShell(isDarkTheme: Boolean) {
                 item(
                     selected = currentKey == destination.key,
                     onClick = {
+                        // Buzz only when the tap actually navigates —
+                        // re-tapping the current tab stays silent. §17
+                        // semantics: preference read at tap time, Confirm
+                        // type (same as AppButton).
                         if (currentKey != destination.key) {
+                            if (hapticsEnabled()) {
+                                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                            }
                             backStack.clear()
                             backStack.add(destination.key)
                         }
@@ -216,6 +232,19 @@ private fun AppShell(isDarkTheme: Boolean) {
                 NavDisplay(
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },
+                    // Specifying entryDecorators replaces the defaults, so
+                    // the saveable-state default is restated, then the
+                    // ViewModel store decorator is added: each back-stack
+                    // entry owns its own ViewModel store. Without it every
+                    // entry shares the Activity store, so the parameterized
+                    // CatDetailViewModel was created once (first catId)
+                    // and reused for every later detail push. (Scene setup
+                    // is built into NavDisplay in this Nav3 line — its
+                    // decorator was removed from the public API.)
+                    entryDecorators = listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberViewModelStoreNavEntryDecorator(),
+                    ),
                     entryProvider = entryProvider {
                         entry<SplashKey> {
                             SplashScreenEntry(
@@ -236,7 +265,10 @@ private fun AppShell(isDarkTheme: Boolean) {
                             )
                         }
                         entry<CatDetailKey> { key ->
-                            CatDetailScreen(catId = key.catId)
+                            CatDetailScreen(
+                                catId = key.catId,
+                                onBack = { backStack.removeLastOrNull() },
+                            )
                         }
                         entry<CarsKey> {
                             CarsScreen()
@@ -245,7 +277,14 @@ private fun AppShell(isDarkTheme: Boolean) {
                             CoinsScreen()
                         }
                         entry<SettingsKey> {
-                            SettingsScreen()
+                            SettingsScreen(
+                                onDatabaseToolsSelected = {
+                                    backStack.add(DbViewerKey)
+                                },
+                            )
+                        }
+                        entry<DbViewerKey> {
+                            DbViewerScreen()
                         }
                     },
                 )

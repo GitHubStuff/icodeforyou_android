@@ -37,7 +37,7 @@ private val TOAST_CONTENT_PADDING = 12.dp
 private val TOAST_ELEVATION = 6.dp
 
 /**
- * The in-app notification overlay (spec: arbitrary composable payloads,
+ * The in-app notification overlay (spec: arbitrary composable payloads,...)
  * auto-dismiss after the notification's duration, tap-dismissible via the
  * whole surface or the X. Sits exactly where spec 0.5 parked it —
  * AppTheme { NavigationSuiteScaffold { NotifierHost { NavDisplay } } } —
@@ -87,6 +87,7 @@ private fun BoxScope.NotificationSurface(
         shape = MaterialTheme.shapes.medium,
         tonalElevation = TOAST_ELEVATION,
         shadowElevation = TOAST_ELEVATION,
+        border = notification.border,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.padding(TOAST_CONTENT_PADDING)) {

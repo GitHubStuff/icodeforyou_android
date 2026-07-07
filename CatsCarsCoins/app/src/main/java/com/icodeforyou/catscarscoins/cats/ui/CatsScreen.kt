@@ -1,9 +1,9 @@
 // cats/ui/CatsScreen.kt
 // CatsCarsCoins — spec 24.3.38. Complete file.
-// Change from 24.3.33: the hand-rolled LazyColumn + empty branch is
-// replaced by the generic SwipeableRefreshableList (24.3.35) — first user
-// of the capstone. isRefreshing drives the pull spinner; the two empty
-// states are chosen by the caller and passed into the emptyContent slot.
+// Change from 24.3.38: refresh (button and pull) dismisses the soft
+// keyboard; the empty state gains a missing-API-key branch (blank
+// BuildConfig.CAT_API_KEY silently yields breedless public-tier rows that
+// the mapper drops — the screen now says so instead of looking broken).
 package com.icodeforyou.catscarscoins.cats.ui
 
 import androidx.compose.foundation.clickable
@@ -25,11 +25,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.icodeforyou.catscarscoins.BuildConfig
 import com.icodeforyou.catscarscoins.cats.domain.Cat
 import com.icodeforyou.catscarscoins.notifier.Notifier
 import com.icodeforyou.catscarscoins.notifier.READ_ONLY_TOAST_MILLIS
@@ -45,6 +48,10 @@ private val ROW_SPACING = 12.dp
 private val ROW_VERTICAL_PADDING = 8.dp
 private val CAT_IMAGE_SIZE = 64.dp
 private val CAT_IMAGE_CORNER = 8.dp
+
+/** Cats spinner: 1.5x the Material default, purple. */
+private const val CAT_SPINNER_SCALE = 1.5f
+private val CAT_SPINNER_COLOR = Color(0xFF9C27B0)
 
 /**
  * Cats destination (Phase 3 UI): debounced FTS search over Coil-rendered
@@ -62,6 +69,7 @@ fun CatsScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val cats by viewModel.cats.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val keyboard = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         viewModel.refreshFailures.collect {
@@ -76,7 +84,12 @@ fun CatsScreen(
         cats = cats,
         isRefreshing = isRefreshing,
         onQueryChanged = viewModel::onQueryChanged,
-        onRefresh = viewModel::onRefresh,
+        // Refresh dismisses the keyboard — covers both the button and
+        // pull-to-refresh, which share this lambda.
+        onRefresh = {
+            keyboard?.hide()
+            viewModel.onRefresh()
+        },
         onCatSelected = onCatSelected,
     )
 }
@@ -122,6 +135,8 @@ private fun CatsContent(
             onRefresh = onRefresh,
             emptyContent = { CatsEmptyState(query = query) },
             modifier = Modifier.weight(1f),
+            indicatorScale = CAT_SPINNER_SCALE,
+            indicatorColor = CAT_SPINNER_COLOR,
         ) { cat ->
             CatRow(cat = cat, onClick = { onCatSelected(cat.id) })
             HorizontalDivider()
@@ -131,10 +146,17 @@ private fun CatsContent(
 
 @Composable
 private fun CatsEmptyState(query: String) {
-    val (title, detail) = if (query.isBlank()) {
-        "No cats yet" to "Tap Refresh to fetch a page from The Cat API."
-    } else {
-        "No matches" to "No breed matches \"$query\"."
+    val (title, detail) = when {
+        // Keyless requests hit The Cat API's public tier, whose rows lack
+        // breed data and are dropped by the mapper — the list stays empty
+        // with no error. Say so instead of looking broken.
+        BuildConfig.CAT_API_KEY.isBlank() ->
+            "Cat API key missing" to
+                    "Add CAT_API_KEY=your_key (no quotes) to local.properties and rebuild."
+        query.isBlank() ->
+            "No cats yet" to "Tap Refresh to fetch a page from The Cat API."
+        else ->
+            "No matches" to "No breed matches \"$query\"."
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = title, style = MaterialTheme.typography.titleMedium)

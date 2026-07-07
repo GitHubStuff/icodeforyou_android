@@ -27,7 +27,21 @@ val localProperties = Properties().apply {
         file.inputStream().use { load(it) }
     }
 }
-val catApiKey: String = localProperties.getProperty("CAT_API_KEY","")
+// Sanitize: .properties files don't strip quotes, and a pasted
+// CAT_API_KEY="live_..." would otherwise embed literal quote characters
+// in the header. Trim whitespace and strip either quote style.
+val catApiKey: String = localProperties.getProperty("CAT_API_KEY", "")
+    .trim()
+    .removeSurrounding("\"")
+    .removeSurrounding("'")
+
+if (catApiKey.isBlank()) {
+    logger.warn(
+        "WARNING: CAT_API_KEY is missing or blank in local.properties. " +
+                "The Cats screen will fetch no breed data. " +
+                "Add the line: CAT_API_KEY=your_key (exact name, no quotes).",
+    )
+}
 
 android {
     namespace = "com.icodeforyou.catscarscoins"

@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +51,7 @@ fun CarsScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val manufacturers by viewModel.manufacturers.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val keyboard = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         viewModel.refreshFailures.collect {
@@ -64,7 +66,12 @@ fun CarsScreen(
         manufacturers = manufacturers,
         isRefreshing = isRefreshing,
         onQueryChanged = viewModel::onQueryChanged,
-        onRefresh = viewModel::onRefresh,
+        // Refresh dismisses the keyboard — covers both the button and
+        // pull-to-refresh, which share this lambda.
+        onRefresh = {
+            keyboard?.hide()
+            viewModel.onRefresh()
+        },
     )
 }
 

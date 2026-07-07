@@ -1,32 +1,47 @@
 // preferences/ui/SettingsViewModelTest.kt
-// CatsCarsCoins — spec 24.1.20. Complete file.
+// CatsCarsCoins — spec 24.5.14. Complete file. Test sources.
+// Change from 24.1.20: constructor gains FakeResetAppUseCase (via the
+// viewModel() builder so scenarios stay one-liners); onNukeDatabase
+// delegation test added.
 package com.icodeforyou.catscarscoins.preferences.ui
 
 import app.cash.turbine.test
+import com.icodeforyou.catscarscoins.dbviewer.domain.FakeResetAppUseCase
 import com.icodeforyou.catscarscoins.preferences.domain.AppPreferences
 import com.icodeforyou.catscarscoins.preferences.domain.FakePreferencesRepository
 import com.icodeforyou.catscarscoins.preferences.domain.ThemeMode
 import com.icodeforyou.catscarscoins.testsupport.MainDispatcherRule
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private fun viewModel(
+        repository: FakePreferencesRepository = FakePreferencesRepository(),
+        resetAppUseCase: FakeResetAppUseCase = FakeResetAppUseCase(),
+    ): SettingsViewModel = SettingsViewModel(
+        preferencesRepository = repository,
+        resetAppUseCase = resetAppUseCase,
+    )
+
     @Test
     fun `initial state is the spec default`() = runTest {
-        val viewModel = SettingsViewModel(FakePreferencesRepository())
+        val viewModel = viewModel()
 
         assertEquals(AppPreferences.DEFAULTS, viewModel.preferences.value)
     }
 
     @Test
     fun `onThemeModeSelected persists and emits`() = runTest {
-        val viewModel = SettingsViewModel(FakePreferencesRepository())
+        val viewModel = viewModel()
 
         viewModel.preferences.test {
             assertEquals(AppPreferences.DEFAULTS, awaitItem())
@@ -38,7 +53,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `onPollingIntervalChanged persists an in-range value`() = runTest {
-        val viewModel = SettingsViewModel(FakePreferencesRepository())
+        val viewModel = viewModel()
 
         viewModel.preferences.test {
             assertEquals(AppPreferences.DEFAULTS, awaitItem())
@@ -50,7 +65,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `onPollingIntervalChanged above maximum arrives clamped`() = runTest {
-        val viewModel = SettingsViewModel(FakePreferencesRepository())
+        val viewModel = viewModel()
 
         viewModel.preferences.test {
             assertEquals(AppPreferences.DEFAULTS, awaitItem())
@@ -65,7 +80,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `onPollingPausedChanged persists and emits`() = runTest {
-        val viewModel = SettingsViewModel(FakePreferencesRepository())
+        val viewModel = viewModel()
 
         viewModel.preferences.test {
             assertEquals(AppPreferences.DEFAULTS, awaitItem())
@@ -77,7 +92,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `onHapticsEnabledChanged persists and emits`() = runTest {
-        val viewModel = SettingsViewModel(FakePreferencesRepository())
+        val viewModel = viewModel()
 
         viewModel.preferences.test {
             assertEquals(AppPreferences.DEFAULTS, awaitItem())
@@ -85,5 +100,16 @@ class SettingsViewModelTest {
             viewModel.onHapticsEnabledChanged(false)
             assertEquals(false, awaitItem().hapticsEnabled)
         }
+    }
+
+    @Test
+    fun `onNukeDatabase delegates to the use case`() = runTest {
+        val resetAppUseCase = FakeResetAppUseCase()
+        val viewModel = viewModel(resetAppUseCase = resetAppUseCase)
+
+        viewModel.onNukeDatabase()
+        runCurrent()
+
+        assertEquals(1, resetAppUseCase.executeCount)
     }
 }

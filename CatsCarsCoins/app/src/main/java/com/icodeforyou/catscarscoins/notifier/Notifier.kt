@@ -1,7 +1,11 @@
 // notifier/Notifier.kt
 // CatsCarsCoins — spec 24.2.40. Complete file.
+// Change: optional per-notification [Notification.border] — the host
+// draws it on the toast surface. Default null keeps existing callers
+// borderless and untouched.
 package com.icodeforyou.catscarscoins.notifier
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.Composable
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +33,7 @@ class Notifier {
     class Notification(
         val id: Long,
         val durationMillis: Long,
+        val border: BorderStroke? = null,
         val content: @Composable () -> Unit,
     )
 
@@ -38,10 +43,15 @@ class Notifier {
     val current: StateFlow<Notification?> = _current.asStateFlow()
 
     /** Replace-on-collision: whatever is showing is superseded, always. */
-    fun show(durationMillis: Long, content: @Composable () -> Unit) {
+    fun show(
+        durationMillis: Long,
+        border: BorderStroke? = null,
+        content: @Composable () -> Unit,
+    ) {
         _current.value = Notification(
             id = nextId.incrementAndGet(),
             durationMillis = durationMillis,
+            border = border,
             content = content,
         )
     }

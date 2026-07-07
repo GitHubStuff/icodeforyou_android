@@ -1,6 +1,10 @@
 // coins/domain/CoinPollingEngineTest.kt
 // CatsCarsCoins — spec 24.2.22. Complete file. Test sources.
 // Correction: Explicitly seeding 5s interval to align test assertions with 5s logic.
+// Correction 2: 'refresh resets the next poll timer' boundary math fixed —
+// the early-check now sits strictly inside the reset window (t=6) instead
+// of exactly on the t=8 boundary, and additionally proves the original
+// t=5 tick was cancelled.
 package com.icodeforyou.catscarscoins.coins.domain
 
 import com.icodeforyou.catscarscoins.preferences.domain.AppPreferences
@@ -195,13 +199,19 @@ class CoinPollingEngineTest {
         assertEquals(listOf(100L, 200L), repository.recordedAmounts)
 
         source.nextAmountCents = 300L
-        advanceTimeBy(5.seconds)
+        // t=6: strictly past the ORIGINAL t=5 tick and strictly before the
+        // reset t=8 tick. Nothing fires — proving the refresh at t=3
+        // cancelled the old schedule (the un-reset timer would have
+        // recorded 300 at t=5). The old check advanced to exactly t=8;
+        // advanceTimeBy skips exact-boundary tasks but the runCurrent()
+        // right after executes them, so the tick fired inside the
+        // "haven't polled early" assertion.
+        advanceTimeBy(3.seconds)
         runCurrent()
-        // Ensure we haven't polled early
         assertEquals(listOf(100L, 200L), repository.recordedAmounts)
 
-        // Advance enough to guarantee the tick completes
-        advanceTimeBy(5.seconds + 10.milliseconds)
+        // Cross the t=8 boundary; the reset tick fires.
+        advanceTimeBy(2.seconds + 10.milliseconds)
         runCurrent()
         assertEquals(listOf(100L, 200L, 300L), repository.recordedAmounts)
     }
